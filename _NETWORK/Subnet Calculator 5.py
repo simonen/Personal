@@ -76,78 +76,94 @@ def addr_type(ip_addr: list) -> str:
     return dic.get(''.join(ip_addr), 'host')
 
 
-chars = 90
-
-ip = valid_ip()
-mask = valid_mask()
-octet = mask // 8
-norm_mask = octet * 8
-all_networks = 2 ** (mask % 8)
-step = 256 // all_networks
-total_hosts = 2 ** (32 - mask)
-usable_hosts = total_hosts - 2
-
-ip_dec = '.'.join(ip)
-bin_ip = [f"{x:08b}" for x in list(map(int, ip))]
-subnet_mask_bin = str_split(f"{mask * '1':0<32}")
-subnet_mask_dec = decimal(subnet_mask_bin)
-wildcard_bin = str_split(f"{mask * '0':1<32}")
-wildcard_dec = decimal(wildcard_bin)
-
-scope = addr_scope(bin_ip)
-class_ip = ip_class(bin_ip)
-hex_id = "0x" + "".join([f"{x:02x}" for x in map(int, ip)])
-arpa = f'{".".join([x for x in ip[::-1]])}.in-addr.arpa.'
-ipv4_mapped = f"::ffff:{hex_id[:4]}.{hex_id[4:8]}"
-
-print("=" * chars)
-print(f'all {all_networks} possible /{mask} networks for {".".join(ip[:octet]) + (4 - octet) * ".*"}')
-print("=" * chars)
-
-data = []
-current_addr = [[ip, bin_ip], [subnet_mask_dec, subnet_mask_bin]]
-
-for i in range(0, 256, step):
-    mark = ''
+def network_list(ip, mask, octet, norm_mask, step: int):
+    data = []
     net_addr_bin = str_split(net(bin_ip, norm_mask))
-    net_addr_bin[octet] = f"{i:08b}"
-    first_bin = str_split(first_usable(net_addr_bin))
+    for i in range(0, 256, step):
+        mark = ''
+        net_addr_bin[octet] = f"{i:08b}"
+        first_bin = str_split(first_usable(net_addr_bin))
+        broad_bin = str_split(broad(net_addr_bin, mask))
+        last_bin = str_split(last_usable(broad_bin))
+
+        if decimal(net_addr_bin)[octet] <= int(ip[octet]) <= decimal(broad_bin)[octet]:
+            mark = "*"
+
+        data.append([decimal(net_addr_bin), decimal(first_bin), " -", decimal(last_bin), decimal(broad_bin), mark])
+
+    df = pd.DataFrame(data, columns=['network address', 'first usable host', '',
+                                     'last usable host', 'broadcast address', ''])
+
+    for j in ['network address', 'first usable host', 'last usable host', 'broadcast address']:
+        df[j] = df[j].apply(lambda lst: ".".join(str(x) for x in lst))
+
+    pd.options.display.max_colwidth = None  # To display the full content of each cell
+
+    print(df.to_string(index=False, header=True))
+
+
+chars = 90
+print("#" * chars)
+print('Subnet calculator v0.2 by don_simone')
+print("#" * chars)
+while True:
+
+    ip = valid_ip()
+    mask = valid_mask()
+    octet = mask // 8
+    norm_mask = octet * 8
+    all_networks = 2 ** (mask % 8)
+    step = 256 // all_networks
+    total_hosts = 2 ** (32 - mask)
+    usable_hosts = total_hosts - 2
+
+    ip_dec = '.'.join(ip)
+    bin_ip = [f"{x:08b}" for x in list(map(int, ip))]
+    subnet_mask_bin = str_split(f"{mask * '1':0<32}")
+    subnet_mask_dec = decimal(subnet_mask_bin)
+    net_addr_bin = str_split(net(bin_ip, mask))
+    net_addr_dec = decimal(net_addr_bin)
     broad_bin = str_split(broad(net_addr_bin, mask))
+    broad_dec = decimal(broad_bin)
+    first_bin = str_split(first_usable(net_addr_bin))
+    first_dec = decimal(first_bin)
     last_bin = str_split(last_usable(broad_bin))
+    last_dec = decimal(last_bin)
+    wildcard_bin = str_split(f"{mask * '0':1<32}")
+    wildcard_dec = decimal(wildcard_bin)
 
-    if decimal(net_addr_bin)[octet] <= int(ip[octet]) <= decimal(broad_bin)[octet]:
-        mark = "*"
-        current_addr.extend([[decimal(net_addr_bin), net_addr_bin], [decimal(broad_bin), broad_bin],
-                             [decimal(first_bin), first_bin], [decimal(last_bin), last_bin],
-                             [wildcard_dec, wildcard_bin]])
+    scope = addr_scope(bin_ip)
+    class_ip = ip_class(bin_ip)
+    hex_id = "0x" + "".join([f"{x:02x}" for x in map(int, ip)])
+    arpa = f'{".".join([x for x in ip[::-1]])}.in-addr.arpa.'
+    ipv4_mapped = f"::ffff:{hex_id[:4]}.{hex_id[4:8]}"
 
-    data.append([decimal(net_addr_bin), decimal(first_bin), "-", decimal(last_bin), decimal(broad_bin), mark])
+    print("=" * chars)
+    print(f'all {all_networks} possible /{mask} networks for {".".join(ip[:octet]) + (4 - octet) * ".*"}')
+    print("=" * chars)
 
-df = pd.DataFrame(data, columns=['network address', 'first usable host', '',
-                                 'last usable host', 'broadcast address', ''])
+    network_list(ip, mask, octet, norm_mask, step)
 
-for j in ['network address', 'first usable host', 'last usable host', 'broadcast address']:
-    df[j] = df[j].apply(lambda lst: ".".join(str(x) for x in lst))
+    df = pd.DataFrame([f"{total_hosts:,}", f"{usable_hosts:,}", scope, class_ip, hex_id, arpa, ipv4_mapped],
+                      index=['total hosts                             ', 'usable hosts', 'scope',
+                             'ip class', 'hex id', 'in-addr.arpa', 'IPv4 mapped'],
+                      columns=[""])
+    print("=" * chars)
+    print(df)
 
-pd.options.display.max_colwidth = None  # To display the full content of each cell
+    current_addr = [[ip, bin_ip], [subnet_mask_dec, subnet_mask_bin], [net_addr_dec, net_addr_bin],
+                    [broad_dec, broad_bin], [first_dec, first_bin], [last_dec, last_bin], [wildcard_dec, wildcard_bin]]
 
-print(df.to_string(index=False, header=True))
-print("=" * chars)
-print(f'{".".join(ip)} /{mask} is a {addr_type(bin_ip)} address')
-print("=" * chars)
+    df = pd.DataFrame(current_addr, index=['ip address', 'subnet mask', 'network address', 'broadcast address',
+                                           'first usable', 'last usable', 'wildcard mask'],
+                      columns=['decimal', 'binary'])
 
-df = pd.DataFrame(current_addr, index=['ip address', 'subnet mask', 'network address', 'broadcast address',
-                                       'first usable', 'last usable', 'wildcard mask'],
-                  columns=['decimal', 'binary'])
+    df['decimal'] = df['decimal'].apply(lambda lst: ".".join(str(x) for x in lst))
+    df['binary'] = df['binary'].apply(lambda lst: ".".join(lst))
 
-df['decimal'] = df['decimal'].apply(lambda lst: ".".join(str(x) for x in lst))
-df['binary'] = df['binary'].apply(lambda lst: ".".join(lst))
-
-print(df)
-print("=" * chars)
-
-df = pd.DataFrame([f"{total_hosts:,}", f"{usable_hosts:,}", scope, class_ip, hex_id, arpa, ipv4_mapped],
-                  index=['total hosts          ', 'usable hosts', 'scope',
-                         'ip class', 'hex id', 'in-addr.arpa', 'IPv4 mapped'],
-                  columns=[""])
-print(df)
+    print("=" * chars)
+    print(f'{".".join(ip)} /{mask} is a {addr_type(bin_ip)} address')
+    print("=" * chars)
+    print(df)
+    print("=" * chars)
+    print()
