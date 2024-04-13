@@ -1,0 +1,15 @@
+number = int(input("Kaji 4islo sega: "))
+
+for i in range(0, number + 1):
+    print(i, end=" ")
+    for j in range(i):
+        print(i - 1 - j, end=" ")
+
+    print()
+
+for i in range(number - 1, -1, -1):
+    print(i, end=" ")
+    for j in range(i):
+        print(i - 1 - j, end=" ")
+
+    print()
