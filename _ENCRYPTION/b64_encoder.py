@@ -1,5 +1,4 @@
 from math import ceil
-import sys
 
 
 def b64_encode(string_in, is_padded: int):
