@@ -35,15 +35,15 @@ def b64_encode(string_in, is_padded: int):
 
     return ''.join(encoded)
 
-
 while True:
-    string = ""
+    string = []
     while True:
         line = input("Enter a line (press Enter twice to finish):\n")
         if not line:
             break  # Exit the loop if an empty line is entered
-        string += line + "\n"
+            
+        string.append(line)
 
-    encoded_text = b64_encode(string, 1)
+    encoded_text = b64_encode("\n".join(string), 1)
 
     print(encoded_text)
