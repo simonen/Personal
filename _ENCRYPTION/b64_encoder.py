@@ -30,9 +30,10 @@ def b64_encode(string_in, is_padded: int):
     encoded = [b64_alpha[x] for x in b64_alpha_index]
 
     if is_padded == 1:
-        encoded = ''.join(encoded + padding * ['='])
+        encoded.extend(padding * '=')
 
     return ''.join(encoded)
+
 
 while True:
     string = []
@@ -40,7 +41,7 @@ while True:
         line = input("Enter a line (press Enter twice to finish):\n")
         if not line:
             break  # Exit the loop if an empty line is entered
-            
+
         string.append(line)
 
     encoded_text = b64_encode("\n".join(string), 1)
