@@ -84,8 +84,8 @@ chars = 80
 print("#" * chars)
 print('Subnet calculator v0.2 by don_simone')
 
-ip = '192.224.88.44'.split(".")
-mask = 23
+ip = '172.217.160.1'.split(".")
+mask = 20
 
 octet = mask // 8
 subnet_bits = mask % 8
@@ -119,25 +119,26 @@ print("=" * chars)
 base_mask = mask - (mask % 8)
 sub_step = 256 // total_subnets
 base_sub_bin = str_split(net(bin_ip, base_mask))
-curr_sub_bin = base_sub_bin
+curr_subnet_bin = base_sub_bin
 all_addresses = []
 
 for i in range(total_subnets):
     mark = ''
-    curr_sub_bin[octet] = f"{sub_step * i:08b}"
-    broadcast = str_split(broad(curr_sub_bin, mask))
-    first = str_split(first_usable(curr_sub_bin))
+    curr_subnet_bin[octet] = f"{sub_step * i:08b}"
+    broadcast = str_split(broad(curr_subnet_bin, mask))
+    first = str_split(first_usable(curr_subnet_bin))
     last = str_split(last_usable(broadcast))
 
-    if net_addr_dec == decimal(curr_sub_bin):
-        my_subnet.extend([[decimal(curr_sub_bin), curr_sub_bin], [decimal(first), first], [decimal(last), last],
-                          [decimal(broadcast), broadcast]])
+    if net_addr_dec == decimal(curr_subnet_bin):
+        my_subnet.extend([[decimal(curr_subnet_bin), curr_subnet_bin], [decimal(broadcast), broadcast],
+                          [decimal(first), first], [decimal(last), last]])
+
         mark = '<--'
 
-    all_addresses.append([decimal(curr_sub_bin), decimal(first), decimal(last), decimal(broadcast), [mark]])
+    all_addresses.append([decimal(curr_subnet_bin), decimal(first), decimal(last), decimal(broadcast), [mark]])
 
 pd.options.display.max_colwidth = None
-df = pd.DataFrame(all_addresses, columns=['network address', 'first usable', 'last usable', 'broadcast', 'mark'])
+df = pd.DataFrame(all_addresses, columns=['network address', 'first usable', 'last usable', 'broadcast address', 'you'])
 df = df.map(to_dotted_decimal)
 
 print(df)
@@ -160,4 +161,4 @@ df_b = pd.DataFrame(stats,
 print(df_a)
 print("=" * chars)
 print(df_b)
-df.to_csv('data.csv', index=False, na_rep='')
+# df.to_csv('data.csv', index=False, na_rep='')
