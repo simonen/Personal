@@ -38,7 +38,7 @@ def b64_encode(string_in, is_padded: int):
 while True:
     string = []
     while True:
-        line = input("Enter a line (press Enter twice to finish):\n")
+        line = input("Enter a string (press Enter twice to finish):\n")
         if not line:
             break  # Exit the loop if an empty line is entered
 
